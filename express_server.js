@@ -70,6 +70,17 @@ app.post("/urls/:id/delete", (req, res) => {
   res.redirect('/urls');
 });
 
+app.post("/urls/:id/update", (req, res) => {
+  console.log(`Params: ${req.params.id}, ${req.body.updatedUrl}`);
+  const ID = req.params.id;
+  const updatedUrl = req.body.updatedUrl;
+
+  if (urlDatabase[ID]) {
+    urlDatabase[ID] = updatedUrl;
+  }
+  res.redirect('/urls');
+});
+
 app.listen(PORT, () => {
   console.log(`App listening on port ${PORT}!`);
 });
