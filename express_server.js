@@ -15,6 +15,8 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+// -------------- GET REQ -------------------
+
 app.get("/", (req, res) => {
   // console.log(`Signed cookies: ${req.signedCookies}`);
   res.send("Hello!");
@@ -27,7 +29,6 @@ app.get("/urls.json", (req, res) => {
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
-
 
 app.get("/urls", (req, res) => {
   const templateVars = {
@@ -62,6 +63,17 @@ app.get("/urls/:id", (req, res) => {
 app.get("/u/:id", (req, res) => {
   const longURL = `/urls/${req.params.id}`;
   res.redirect(longURL);
+});
+
+app.get('/register', (req, res) => {
+  const templateVars = {
+    id: req.params.id,
+    longURL: urlDatabase[req.params.id]
+  };
+  if (req.cookies['username']) {
+    templateVars['username'] = req.cookies['username'];
+  }
+  res.render('urls_registration', templateVars);
 });
 
 // -------------- POST REQ -------------------
