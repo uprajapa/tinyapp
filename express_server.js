@@ -7,7 +7,7 @@ app.use(express.urlencoded({ extended: true }));
 
 const PORT = 8080; // default port 8080
 
-let generateRandomString = function() {};
+
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -41,14 +41,27 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+app.get("/u/:id", (req, res) => {
+  const longURL = `/urls/${req.params.id}`;
+  res.redirect(longURL);
+});
+
 // -------------- POST REQ -------------------
 
 app.post("/urls", (req, res) => {
   console.log(req.body); // Log the POST request body to the console
-  urlDatabase['id'] = req.body.longURL;
-  res.send("Ok"); // Respond with 'Ok' (we will replace this)
+  
+  const generateRandomString = function(length, chars) {
+    let result = '';
+    for (let i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
+    return result;
+  };
+  const ID = generateRandomString(6, '0123456789abcdefghijklmnopqrstuvwxyz');
+
+  urlDatabase[ID] = req.body.longURL;
+  res.redirect('/urls'); // Respond with 'Ok' (we will replace this)
 });
 
 app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
+  console.log(`App listening on port ${PORT}!`);
 });
