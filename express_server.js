@@ -33,6 +33,12 @@ const generateRandomString = function() {
   return result;
 };
 
+const ifEmptyData = (req, res) => {
+  if (req.body.email === "" || req.body.password === "") {
+    res.statusCode = 400;
+    return res.send(`Please enter your credentials! Error# ${res.statusCode}`);
+  }
+};
 // -------------- GET REQ -------------------
 
 app.get("/", (req, res) => {
@@ -60,9 +66,10 @@ app.get("/urls", (req, res) => {
 
 app.get("/urls/new", (req, res) => {
   const templateVars = {
+    urls: urlDatabase
   };
-  if (req.cookies['username']) {
-    templateVars['username'] = req.cookies['username'];
+  if (req.cookies['user_id'] in users) {
+    templateVars['user'] = users[req.cookies['user_id']];
   }
   res.render('urls_new', templateVars);
 });
@@ -78,8 +85,8 @@ app.get("/urls/:id", (req, res) => {
     id: req.params.id,
     longURL: urlDatabase[req.params.id]
   };
-  if (req.cookies['username']) {
-    templateVars['username'] = req.cookies['username'];
+  if (req.cookies['user_id'] in users) {
+    templateVars['user'] = users[req.cookies['user_id']];
   }
   res.render("urls_show", templateVars);
 });
@@ -94,8 +101,8 @@ app.get('/register', (req, res) => {
     id: req.params.id,
     longURL: urlDatabase[req.params.id]
   };
-  if (req.cookies['user_id']) {
-    templateVars['username'] = req.cookies['user_id'];
+  if (req.cookies['user_id'] in users) {
+    templateVars['user'] = users[req.cookies['user_id']];
   }
   res.render('urls_registration', templateVars);
 });
@@ -136,33 +143,27 @@ app.post("/urls/:id/update", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  if (req.body.email === "" || req.body.password === "") {
-    res.statusCode = 400;
-    return res.send(`Please enter your credentials: ${res.statusCode}`);
-  }
-  console.log(`req.body.email: ${req.body.email}\nreq.body.pass: ${req.body.password}`);
+  ifEmptyData(req, res);
+
   for (let user in users) {
-    console.log(`user.email: ${users[user].email}, user.password: ${user.password}`);
     if (users[user].email === req.body.email && users[user].password === req.body.password) {
-      
       res.cookie('user_id', user);
-      res.redirect('/urls');
+      return res.redirect('/urls');
     }
   }
+
+  return res.send(`403: wrong Credentials`);
 });
 
 app.post("/logout", (req, res) => {
   res.clearCookie('user_id');
-  res.redirect('/urls');
+  res.redirect('/login');
 });
 
 app.post("/register", (req, res) => {
   const randomID = generateRandomString();
 
-  if (req.body.email === "" || req.body.password === "") {
-    res.statusCode = 400;
-    return res.send(`Please enter your credentials: ${res.statusCode}`);
-  }
+  ifEmptyData(req, res);
 
   for (let user in users) {
     if (users[user].email === req.body.email) {
