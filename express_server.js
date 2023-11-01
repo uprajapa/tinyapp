@@ -69,8 +69,9 @@ app.get("/urls/new", (req, res) => {
   };
   if (req.cookies['user_id'] in users) {
     templateVars['user'] = users[req.cookies['user_id']];
+    return res.render('urls_new', templateVars);
   }
-  res.render('urls_new', templateVars);
+  return res.redirect('../login');
 });
 
 app.get("/urls/:id", (req, res) => {
@@ -95,19 +96,25 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.get('/register', (req, res) => {
-  const templateVars = {
-    id: req.params.id,
-    longURL: urlDatabase[req.params.id]
-  };
-  if (req.cookies['user_id'] in users) {
-    templateVars['user'] = users[req.cookies['user_id']];
+  const templateVars = {};
+  // if user is already logged in
+  if (req.cookies['user_id'] === undefined) {
+    if (req.cookies['user_id'] in users) {
+      templateVars['user'] = users[req.cookies['user_id']];
+    }
+    return res.render('urls_registration', templateVars);
   }
-  res.render('urls_registration', templateVars);
+  // else
+  return res.redirect('urls');
 });
 
 app.get("/login", (req, res) => {
-  const templateVars = { users };
-  res.render('urls_login', templateVars);
+  // if user is already logged in
+  if (req.cookies['user_id'] === undefined) {
+    const templateVars = { users };
+    return res.render('urls_login', templateVars);
+  }
+  return res.redirect('urls');
 });
 
 // -------------- POST REQ -------------------
@@ -116,7 +123,7 @@ app.post("/urls", (req, res) => {
   const ID = generateRandomString();
 
   urlDatabase[ID] = req.body.longURL;
-  res.redirect('/urls'); // Respond with 'Ok' (we will replace this)
+  res.redirect('/urls');
 });
 
 app.post("/urls/:id/delete", (req, res) => {
