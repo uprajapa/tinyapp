@@ -42,7 +42,6 @@ const ifEmptyData = (req, res) => {
 // -------------- GET REQ -------------------
 
 app.get("/", (req, res) => {
-  // console.log(`Signed cookies: ${req.signedCookies}`);
   res.send("Hello!");
 });
 
@@ -75,12 +74,6 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
-  if (req.params.id in urlDatabase) {
-    console.log();
-  } else {
-    res.statusCode = 404;
-    res.send('Error: wrong URL');
-  }
   const templateVars = {
     id: req.params.id,
     longURL: urlDatabase[req.params.id]
@@ -88,7 +81,12 @@ app.get("/urls/:id", (req, res) => {
   if (req.cookies['user_id'] in users) {
     templateVars['user'] = users[req.cookies['user_id']];
   }
-  res.render("urls_show", templateVars);
+  if (req.params.id in urlDatabase) {
+    return res.render("urls_show", templateVars);
+  } else {
+    res.statusCode = 404;
+    res.send('Error: wrong URL');
+  }
 });
 
 app.get("/u/:id", (req, res) => {
@@ -115,8 +113,6 @@ app.get("/login", (req, res) => {
 // -------------- POST REQ -------------------
 
 app.post("/urls", (req, res) => {
-  console.log(req.body); // Log the POST request body to the console
-  
   const ID = generateRandomString();
 
   urlDatabase[ID] = req.body.longURL;
@@ -132,7 +128,6 @@ app.post("/urls/:id/delete", (req, res) => {
 });
 
 app.post("/urls/:id/update", (req, res) => {
-  console.log(`Params: ${req.params.id}, ${req.body.updatedUrl}`);
   const ID = req.params.id;
   const updatedUrl = req.body.updatedUrl;
 
@@ -178,12 +173,11 @@ app.post("/register", (req, res) => {
       password: req.body.password
     };
   } catch (error) {
-    console.log(`Error: ${error}`);
+    console.log(`Error regetering new user: ${error}`);
   }
   res.cookie('user_id', randomID);
   
   res.redirect('/urls');
-  console.log(users);
 });
 
 app.listen(PORT, () => {
