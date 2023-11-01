@@ -12,7 +12,7 @@ const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur",
+    password: "123",
   },
   user2RandomID: {
     id: "user2RandomID",
@@ -55,8 +55,6 @@ app.get("/urls", (req, res) => {
   if (req.cookies['user_id'] in users) {
     templateVars['user'] = users[req.cookies['user_id']];
   }
-  let temp = JSON.stringify(templateVars);
-  console.log(`Logged in user email id: ${temp}`);
   res.render('urls_index', templateVars);
 });
 
@@ -70,6 +68,12 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
+  if (req.params.id in urlDatabase) {
+    console.log();
+  } else {
+    res.statusCode = 404;
+    res.send('Error: wrong URL');
+  }
   const templateVars = {
     id: req.params.id,
     longURL: urlDatabase[req.params.id]
@@ -94,6 +98,11 @@ app.get('/register', (req, res) => {
     templateVars['username'] = req.cookies['user_id'];
   }
   res.render('urls_registration', templateVars);
+});
+
+app.get("/login", (req, res) => {
+  const templateVars = { users };
+  res.render('urls_login', templateVars);
 });
 
 // -------------- POST REQ -------------------
@@ -127,33 +136,53 @@ app.post("/urls/:id/update", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  res.cookie('username', req.body.username);
-  res.redirect('/urls');
+  if (req.body.email === "" || req.body.password === "") {
+    res.statusCode = 400;
+    return res.send(`Please enter your credentials: ${res.statusCode}`);
+  }
+  console.log(`req.body.email: ${req.body.email}\nreq.body.pass: ${req.body.password}`);
+  for (let user in users) {
+    console.log(`user.email: ${users[user].email}, user.password: ${user.password}`);
+    if (users[user].email === req.body.email && users[user].password === req.body.password) {
+      
+      res.cookie('user_id', user);
+      res.redirect('/urls');
+    }
+  }
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('user_id');
   res.redirect('/urls');
 });
 
 app.post("/register", (req, res) => {
   const randomID = generateRandomString();
-  if (!users[randomID]) {
-    try {
-      users[randomID] = {
-        id: randomID,
-        email: req.body.email,
-        password: req.body.password
-      };
-    } catch (error) {
-      console.log(`Error: ${error}`);
-    }
-    console.log(`New User: \nID:${users[randomID].id}\nEmail:${users[randomID].email}`);
-    res.cookie('user_id', randomID);
-  } else {
-    res.send('User already exists!');
+
+  if (req.body.email === "" || req.body.password === "") {
+    res.statusCode = 400;
+    return res.send(`Please enter your credentials: ${res.statusCode}`);
   }
+
+  for (let user in users) {
+    if (users[user].email === req.body.email) {
+      res.statusCode = 400;
+      return res.send(`User already exists! Error code: ${res.statusCode}`);
+    }
+  }
+  try {
+    users[randomID] = {
+      id: randomID,
+      email: req.body.email,
+      password: req.body.password
+    };
+  } catch (error) {
+    console.log(`Error: ${error}`);
+  }
+  res.cookie('user_id', randomID);
+  
   res.redirect('/urls');
+  console.log(users);
 });
 
 app.listen(PORT, () => {
