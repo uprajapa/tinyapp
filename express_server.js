@@ -78,11 +78,6 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  
-  const userCookie = req.session.user_id;
-  if (!(userCookie in users)) {
-    return res.status(400).send(`Please log in to access this page!`);
-  }
   /*  templateVars format(Stringify):
       {"userID":{
         "id":"userRandomID",
@@ -98,6 +93,11 @@ app.get("/urls", (req, res) => {
         "https://www.facebook.com"
       ]
     } */
+  
+  const userCookie = req.session.user_id;
+  if (!(userCookie in users)) {
+    return res.status(400).send(`Please log in to access this page!`);
+  }
 
   let templateVars = urlsForUser(userCookie);
   // if every link is deleted
@@ -130,8 +130,6 @@ app.get("/urls/:shortUrl", (req, res) => {
       if (url === templateVars.shortUrl) {
         templateVars['userID'] = urlDatabase[url].userID;
         templateVars['longUrl'] = urlDatabase[url].longURL;
-        console.log('URL:', templateVars['longUrl']);
-
       }
     }
   }
