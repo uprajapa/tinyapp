@@ -18,8 +18,8 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
     </div>
-      <% if (typeof user_id !== 'undefined') {%>
-        <p class="navbar-brand"> Hello, <%= user_id.email %>!</p>
+      <% if (typeof userID !== 'undefined') {%>
+        <p class="navbar-brand"> Hello, <%= userID.email %>!</p>
       <form method="POST" action="/logout">
         <button type="submit">Logout</button>
       </form>

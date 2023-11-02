@@ -62,6 +62,7 @@ app.get("/hello", (req, res) => {
 
 app.get("/urls", (req, res) => {
   // console.log(`req.cookies['user_id']: ${req.cookies['user_id']}, ${req.cookies.user_id}`);
+  const userCookie = req.cookies['user_id'];
   let templateVars = {};
   /*  templateVars format(Stringify):
       {"userID":{
@@ -78,10 +79,12 @@ app.get("/urls", (req, res) => {
         "https://www.facebook.com"
       ]
     } */
-  if (req.cookies['user_id'] in users) {
-    templateVars['userID'] = req.cookies['user_id'];
+
+    
+  if (userCookie in users) {
+    templateVars['userID'] = users[userCookie];
     for (let url in urlDatabase) {
-      if (req.cookies['user_id'] === urlDatabase[url].userID) {
+      if (userCookie === urlDatabase[url].userID) {
         if (templateVars['shortUrl'] !== undefined) {
           templateVars['shortUrl'].push(url);
         } else {
@@ -94,8 +97,12 @@ app.get("/urls", (req, res) => {
         }
       }
     }
+    // if every link is deleted
+    if (templateVars['shortUrl'] === undefined) {
+      return res.send('No data to display!');
+    }
     templateVars['count'] = templateVars['shortUrl'].length;
-    console.log(`templateVars['shortUrl']: ${templateVars['shortUrl'].length}`);
+
     return res.render('urls_index', templateVars);
   } else {
     return res.redirect('login');
