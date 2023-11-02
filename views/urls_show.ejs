@@ -14,11 +14,11 @@
   <body>
     <div class="card text-center">
       <div class="card-header"></div>
-      <form method="POST" action="/urls/<%= id %>/update">
+      <form method="POST" action="/urls/<%= shortUrl %>/update">
         <div class="card-body">
-          <h5 class="card-title">TinyURL for: <%= longURL %></h5>
+          <h5 class="card-title">TinyURL for: <%= longUrl %></h5>
           <p class="card-text">
-            Short URL ID: <a href="/u/<%= id %>"><%= id %></a>
+            Short URL ID: <a href="/u/<%= shortUrl %>"><%= shortUrl %></a>
           </p>
           <p>Update URL: <input type="name" name="updatedUrl"></input></p>
         </div>
