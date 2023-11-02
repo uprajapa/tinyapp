@@ -1,6 +1,7 @@
 const express = require("express");
 const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
+const { generateRandomString, ifEmptyData, getUserByEmail } = require('./helpers');
 
 const app = express();
 app.set('view engine', 'ejs');
@@ -39,19 +40,6 @@ const urlDatabase = {
   }
 };
 
-const generateRandomString = function() {
-  const chars = '0123456789abcdefghijklmnopqrstuvwxyz';
-  let result = '';
-  for (let i = 6; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
-  return result;
-};
-
-const ifEmptyData = (req, res) => {
-  if (req.body.email === "" || req.body.password === "") {
-    return res.status(400).send(`Please enter your credentials!`);
-  }
-};
-
 const urlsForUser = (userCookie) => {
   let templateVars = {};
 
@@ -75,6 +63,7 @@ const urlsForUser = (userCookie) => {
 };
 
 // -------------- GET REQ -------------------
+
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -178,17 +167,18 @@ app.get("/login", (req, res) => {
   // if user is already logged in
   const templateVars = { users };
   if (req.session.user_id === undefined) {
-    console.log(`inside GET /login`);
     return res.render('urls_login', templateVars);
   }
   return res.redirect('urls');
 });
 
+
 // -------------- POST REQ -------------------
+
 
 app.post("/urls", (req, res) => {
   const shortUrl = generateRandomString();
-  console.log('req.body.longUrl', req.body.longUrl);
+  
   urlDatabase[shortUrl] = {
     longURL: req.body.longUrl,
     userID: req.session.user_id
@@ -240,10 +230,8 @@ app.post("/register", (req, res) => {
 
   ifEmptyData(req, res);
 
-  for (let user in users) {
-    if (users[user].email === req.body.email) {
-      return res.status(400).send(`User already exists!`);
-    }
+  if (getUserByEmail(req.body.email, users)) {
+    return res.status(400).send(`User already exists!`);
   }
 
   const password = req.body.password;
@@ -253,7 +241,7 @@ app.post("/register", (req, res) => {
     email: req.body.email,
     password: hashedPassword
   };
-  console.log(`hashedPassword: ${hashedPassword}`);
+  
   // eslint-disable-next-line camelcase
   req.session.user_id = randomID;
   
