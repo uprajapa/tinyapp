@@ -41,9 +41,31 @@ const generateRandomString = function() {
 
 const ifEmptyData = (req, res) => {
   if (req.body.email === "" || req.body.password === "") {
-    res.statusCode = 400;
-    return res.send(`Please enter your credentials! Error# ${res.statusCode}`);
+    return res.status(400).send(`Please enter your credentials!`);
   }
+};
+
+const urlsForUser = (userCookie) => {
+  let templateVars = {};
+
+  for (let url in urlDatabase) {
+    if (userCookie === urlDatabase[url].userID) {
+      
+      templateVars['userID'] = users[userCookie];
+      if (templateVars['shortUrl'] !== undefined) {
+        templateVars['shortUrl'].push(url);
+      } else {
+        templateVars['shortUrl'] = [ url ];
+      }
+      if (templateVars['longUrl'] !== undefined) {
+        templateVars['longUrl'].push(urlDatabase[url].longURL);
+      } else {
+        templateVars['longUrl'] = [ urlDatabase[url].longURL ];
+      }
+    }
+  }
+  console.log(`Tempvars: ${templateVars}`);
+  return templateVars;
 };
 
 // -------------- GET REQ -------------------
@@ -63,7 +85,11 @@ app.get("/hello", (req, res) => {
 app.get("/urls", (req, res) => {
   // console.log(`req.cookies['user_id']: ${req.cookies['user_id']}, ${req.cookies.user_id}`);
   const userCookie = req.cookies['user_id'];
-  let templateVars = {};
+  if (userCookie in users) {
+    console.log(`userCookie: ${userCookie}`);
+  } else {
+    return res.status(400).send(`Please log in to access this page!`);
+  }
   /*  templateVars format(Stringify):
       {"userID":{
         "id":"userRandomID",
@@ -80,33 +106,15 @@ app.get("/urls", (req, res) => {
       ]
     } */
 
-    
-  if (userCookie in users) {
-    templateVars['userID'] = users[userCookie];
-    for (let url in urlDatabase) {
-      if (userCookie === urlDatabase[url].userID) {
-        if (templateVars['shortUrl'] !== undefined) {
-          templateVars['shortUrl'].push(url);
-        } else {
-          templateVars['shortUrl'] = [ url ];
-        }
-        if (templateVars['longUrl'] !== undefined) {
-          templateVars['longUrl'].push(urlDatabase[url].longURL);
-        } else {
-          templateVars['longUrl'] = [ urlDatabase[url].longURL ];
-        }
-      }
-    }
-    // if every link is deleted
-    if (templateVars['shortUrl'] === undefined) {
-      return res.send('No data to display!');
-    }
-    templateVars['count'] = templateVars['shortUrl'].length;
-
-    return res.render('urls_index', templateVars);
-  } else {
-    return res.redirect('login');
+  let templateVars = urlsForUser(userCookie);
+  // if every link is deleted
+  if (templateVars['shortUrl'] === undefined) {
+    return res.send('No data to display!');
   }
+  templateVars['count'] = templateVars['shortUrl'].length;
+
+  return res.render('urls_index', templateVars);
+  
 });
 
 app.get("/urls/new", (req, res) => {
@@ -140,8 +148,7 @@ app.get("/urls/:shortUrl", (req, res) => {
   if (req.params.shortUrl in urlDatabase) {
     return res.render("urls_show", templateVars);
   } else {
-    res.statusCode = 404;
-    res.send('Error: wrong URL');
+    res.status(400).send('Error: wrong URL');
   }
 });
 
@@ -165,8 +172,9 @@ app.get('/register', (req, res) => {
 
 app.get("/login", (req, res) => {
   // if user is already logged in
+  const templateVars = { users };
   if (req.cookies['user_id'] === undefined) {
-    const templateVars = { users };
+    console.log(`inside GET /login`);
     return res.render('urls_login', templateVars);
   }
   return res.redirect('urls');
@@ -213,7 +221,7 @@ app.post("/login", (req, res) => {
     }
   }
 
-  return res.send(`403: wrong Credentials`);
+  return res.status(403).send(`403: wrong Credentials`);
 });
 
 app.post("/logout", (req, res) => {
@@ -228,8 +236,7 @@ app.post("/register", (req, res) => {
 
   for (let user in users) {
     if (users[user].email === req.body.email) {
-      res.statusCode = 400;
-      return res.send(`User already exists! Error code: ${res.statusCode}`);
+      return res.status(400).send(`User already exists!`);
     }
   }
   try {
@@ -239,7 +246,7 @@ app.post("/register", (req, res) => {
       password: req.body.password
     };
   } catch (error) {
-    console.log(`Error regetering new user: ${error}`);
+    res.status(400).send(`Error registering you! ${error}`);
   }
   res.cookie('user_id', randomID);
   
@@ -248,4 +255,24 @@ app.post("/register", (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`App listening on port ${PORT}!`);
+});
+
+// ----- Methods that cannot be accessed from browsers -------
+
+app.post("urls/:id", (req, res) => {
+  if (!req.params.id) {
+    return res.status(400).send('Please provide valid ID!');
+  }
+  if (!req.cookies['user_id']) {
+    return res.status(400).send('Please login first!');
+  }
+});
+
+app.post("urls/:id/delete", (req, res) => {
+  if (!req.params.id) {
+    return res.status(400).send('Please provide valid ID!');
+  }
+  if (!req.cookies['user_id']) {
+    return res.status(400).send('Please login first!');
+  }
 });
