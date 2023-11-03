@@ -1,7 +1,7 @@
 const express = require("express");
 const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
-const { generateRandomString, ifEmptyData, getUserByEmail } = require('./helpers');
+const { generateRandomString, ifEmptyData, getUserByEmail, urlsForUser } = require('./helpers');
 
 const app = express();
 app.set('view engine', 'ejs');
@@ -11,8 +11,7 @@ app.use(cookieSession({
   keys: ['key1'],
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }));
-// const longURL = `/urls/${req.params.id}`;
-//   res.redirect(longURL);
+
 const PORT = 8080; // default port 8080
 
 const users = {
@@ -39,27 +38,7 @@ const urlDatabase = {
   }
 };
 
-const urlsForUser = (userCookie) => {
-  let templateVars = {};
 
-  for (let url in urlDatabase) {
-    if (userCookie === urlDatabase[url].userID) {
-      
-      templateVars['userID'] = users[userCookie];
-      if (templateVars['shortUrl'] !== undefined) {
-        templateVars['shortUrl'].push(url);
-      } else {
-        templateVars['shortUrl'] = [ url ];
-      }
-      if (templateVars['longUrl'] !== undefined) {
-        templateVars['longUrl'].push(urlDatabase[url].longURL);
-      } else {
-        templateVars['longUrl'] = [ urlDatabase[url].longURL ];
-      }
-    }
-  }
-  return templateVars;
-};
 
 // -------------- GET REQ -------------------
 
@@ -78,13 +57,13 @@ app.get("/hello", (req, res) => {
 
 app.get("/urls", (req, res) => {
   const userCookie = req.session.user_id;
-  let templateVars = urlsForUser(userCookie);
+  let templateVars = urlsForUser(userCookie, urlDatabase);
 
-  if (!(userCookie in users)) {
+  if (!users[userCookie]) {
     return res.status(400).send(`Please log in to access this page!`);
   }
+  templateVars.userID = users[userCookie];
 
-  
   if (templateVars['shortUrl'] === undefined) {
     return res.send('No data to display!');
   }
@@ -106,21 +85,27 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortUrl", (req, res) => {
+  const userCookie = req.session.user_id;
+  
+  if (!users[userCookie]) {
+    return res.status(400).send(`Please log in to access this page!`);
+  }
+
+  const shortUrl = req.params.shortUrl;
   const templateVars = {
-    shortUrl: req.params.shortUrl
+    shortUrl
   };
+
   for (let url in urlDatabase) {
-    if (req.session.user_id === urlDatabase[url].userID) {
+    if (userCookie === urlDatabase[url].userID) {
       if (url === templateVars.shortUrl) {
         templateVars['userID'] = urlDatabase[url].userID;
         templateVars['longUrl'] = urlDatabase[url].longURL;
       }
     }
   }
-  if (req.session.user_id in users) {
-    templateVars['user'] = users[req.session.user_id];
-  }
-  if (req.params.shortUrl in urlDatabase) {
+
+  if (urlDatabase[shortUrl]) {
     return res.render("urls_show", templateVars);
   } else {
     res.status(400).send('Error: wrong URL');

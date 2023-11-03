@@ -20,4 +20,25 @@ const getUserByEmail = function(email, database) {
   return null;
 };
 
-module.exports = { generateRandomString, ifEmptyData, getUserByEmail };
+const urlsForUser = (userCookie, urlDatabase) => {
+  let templateVars = {};
+
+  for (let url in urlDatabase) {
+    if (userCookie === urlDatabase[url].userID) {
+      
+      // templateVars['userID'] = users[userCookie];
+      if (templateVars['shortUrl'] !== undefined) {
+        templateVars['shortUrl'].push(url);
+      } else {
+        templateVars['shortUrl'] = [ url ];
+      }
+      if (templateVars['longUrl'] !== undefined) {
+        templateVars['longUrl'].push(urlDatabase[url].longURL);
+      } else {
+        templateVars['longUrl'] = [ urlDatabase[url].longURL ];
+      }
+    }
+  }
+  return templateVars;
+};
+module.exports = { generateRandomString, ifEmptyData, getUserByEmail, urlsForUser };
