@@ -34,7 +34,7 @@
             <tr>
               <td><a href="/u/<%= shortUrl[i] %>"><%= shortUrl[i] %></a></td>
               <td><a href="<%= longUrl[i] %>" target="_blank"><%= longUrl[i] %></a></td>              
-              <td><form method="GET" action="/u/<%= shortUrl[i] %>"><button type="submit">Edit</button></form></td>
+              <td><form method="GET" action="/urls/<%= shortUrl[i] %>"><button type="submit">Edit</button></form></td>
               <td><form method="POST" action="/urls/<%= shortUrl[i] %>/delete"><button type="submit">Delete</button></form></td>
             </tr>
           <% } %>

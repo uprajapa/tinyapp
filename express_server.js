@@ -9,11 +9,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieSession({
   name: 'session',
   keys: ['key1'],
-
-  // Cookie Options
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
 }));
-
+// const longURL = `/urls/${req.params.id}`;
+//   res.redirect(longURL);
 const PORT = 8080; // default port 8080
 
 const users = {
@@ -78,29 +77,14 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  /*  templateVars format(Stringify):
-      {"userID":{
-        "id":"userRandomID",
-        "email":"user@example.com",
-        "password":"123"
-      },
-      "shortUrl":[
-        "b2xVn2",
-        "xlrdbc"
-      ],
-      "longUrl":[
-        "http://www.lighthouselabs.ca",
-        "https://www.facebook.com"
-      ]
-    } */
-  
   const userCookie = req.session.user_id;
+  let templateVars = urlsForUser(userCookie);
+
   if (!(userCookie in users)) {
     return res.status(400).send(`Please log in to access this page!`);
   }
 
-  let templateVars = urlsForUser(userCookie);
-  // if every link is deleted
+  
   if (templateVars['shortUrl'] === undefined) {
     return res.send('No data to display!');
   }
@@ -144,25 +128,24 @@ app.get("/urls/:shortUrl", (req, res) => {
 });
 
 app.get("/u/:id", (req, res) => {
-  const longURL = `/urls/${req.params.id}`;
-  res.redirect(longURL);
+  res.redirect(urlDatabase[req.params.id].longURL);
 });
 
 app.get('/register', (req, res) => {
   const templateVars = {};
-  // if user is already logged in
+  
   if (req.session.user_id === undefined) {
     if (req.session.user_id in users) {
       templateVars['user'] = users[req.session.user_id];
     }
     return res.render('urls_registration', templateVars);
   }
-  // else
+  
   return res.redirect('urls');
 });
 
 app.get("/login", (req, res) => {
-  // if user is already logged in
+  
   const templateVars = { users };
   if (req.session.user_id === undefined) {
     return res.render('urls_login', templateVars);
@@ -197,8 +180,7 @@ app.post("/urls/:shortUrl/update", (req, res) => {
   const updatedUrl = req.body.updatedUrl;
 
   if (urlDatabase[shortUrl]) {
-    urlDatabase[updatedUrl] = urlDatabase[shortUrl];
-    delete urlDatabase[shortUrl];
+    urlDatabase[shortUrl].longURL = updatedUrl;
   }
   res.redirect('/urls');
 });
