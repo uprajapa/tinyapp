@@ -35,7 +35,11 @@ const urlDatabase = {
   "9sm5xK": {
     longURL: "http://www.google.com",
     userID: "user2RandomID"
-  }
+  },
+  // "mh2li9": {
+  //   longURL: "facebook.com",
+  //   userId: "urvish[praja[ti@icloud.com"
+  // }
 };
 
 
@@ -96,20 +100,16 @@ app.get("/urls/:shortUrl", (req, res) => {
     shortUrl
   };
 
-  for (let url in urlDatabase) {
-    if (userCookie === urlDatabase[url].userID) {
-      if (url === templateVars.shortUrl) {
-        templateVars['userID'] = urlDatabase[url].userID;
-        templateVars['longUrl'] = urlDatabase[url].longURL;
-      }
-    }
-  }
-
   if (urlDatabase[shortUrl]) {
-    return res.render("urls_show", templateVars);
-  } else {
-    res.status(400).send('Error: wrong URL');
+    if (userCookie === urlDatabase[shortUrl].userID) {
+      templateVars['userID'] = users[userCookie];
+      templateVars['longUrl'] = urlDatabase[shortUrl].longURL;
+      return res.render("urls_show", templateVars);
+    }
+    return res.status(400).send('Error: Authorization error');
   }
+  return res.status(400).send('Error: wrong URL');
+
 });
 
 app.get("/u/:id", (req, res) => {
@@ -160,7 +160,7 @@ app.post("/urls/:shortUrl/delete", (req, res) => {
   }
 });
 
-app.post("/urls/:shortUrl/update", (req, res) => {
+app.post("/urls/:shortUrl", (req, res) => {
   const shortUrl = req.params.shortUrl;
   const updatedUrl = req.body.updatedUrl;
 
