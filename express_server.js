@@ -48,7 +48,7 @@ const urlDatabase = {
 
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  return req.session.user_ID ? res.redirect('/urls') : res.redirect('/login');
 });
 
 app.get("/urls.json", (req, res) => {
@@ -68,10 +68,11 @@ app.get("/urls", (req, res) => {
   }
   templateVars.userID = users[userCookie];
 
-  if (templateVars['shortUrl'] === undefined) {
-    return res.send('No data to display!');
+  if (templateVars['shortUrl']) {
+    templateVars['count'] = templateVars['shortUrl'].length;
+  } else {
+    templateVars['count'] = 0;
   }
-  templateVars['count'] = templateVars['shortUrl'].length;
 
   return res.render('urls_index', templateVars);
   
